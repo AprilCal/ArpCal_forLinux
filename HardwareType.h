@@ -1,0 +1,5 @@
+class HardwareType
+{
+    public:
+	HardwareType();
+};
