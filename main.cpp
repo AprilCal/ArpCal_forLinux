@@ -20,6 +20,7 @@ using namespace std;
 //void getDeviceList();
 int main(int argc,char* argv[])
 {  
+    //TODO: refactor parse options
     if(argc<2)
     {
 	cout<<"arguement error!"<<endl;

