@@ -17,6 +17,7 @@
 #include "parse-options.h"
 #include "arp-list.h"
 #include "o_funcs.h"
+#include "encap_pcap.h"
 using namespace std;
 
 typedef unsigned char byte;
@@ -52,7 +53,9 @@ struct arpPacket
 
 /* Get mac address by name and return an array of 
    byte. The size of the array is ETHER_ADDR_LEN. 
-   Remember to free the memory returned.        */
+   Remember to free the memory returned.        
+   If device does not have address(such as pseudo 
+   device.), return a byte array consist of 0.  */
 byte* get_mac_address(char* deviceName)
 {
     ifreq ifr;
@@ -76,6 +79,7 @@ void print_macAddr(byte* macAddr)
 	printf("%02x",(byte)macAddr[i]);
     }
 }
+
 void print_ipv4Addr(byte* ipv4Addr)
 {
     printf("ipv4Addr");
@@ -164,27 +168,7 @@ byte* ipv4String_to_byteArray_with_validity_check(char* ipAddr)
 	//TODO:errorCode
 	output_error_msg_and_exit("ip address format error. [xx.xx.xx.xx]",0);
     }
-    
 }
-
-char* pcap_lookupdev_with_prompts(char* errBuf)
-{
-    char* deviceName;
-    cout<<"Looking for suitable device...";
-    deviceName = pcap_lookupdev(errBuf);
-    if(deviceName)//success 
-    {  
-	cout<<"done.  device:"<<deviceName<<endl;
-    }
-    else          //fail
-    {
-	//TODO: errorCode.
-	output_error_msg_and_exit(errBuf,0);
-    }
-    return deviceName;
-}
-
-
 
 //void arpTrick(int argc,char *argv[]);
 void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,int intervalTime)
@@ -203,6 +187,11 @@ void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,
 
     /* Looking for suitable device. */
     deviceName = pcap_lookupdev_with_prompts(errBuf);
+    //if(!if_device_has_address(deviceName))
+    //{
+	//TODO: if it can send packet if a device do not have a mac?
+	//output_error_msg_and_exit("Do not have any suitable device.",0);
+    //}
 
     /* Set ether header. */
     byte dstMacAddr[ETHER_ADDR_LEN]={0xff,0xff,0xff,0xff,0xff,0xff};
@@ -266,6 +255,7 @@ void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,
     cout<<"packet:"<<endl;
     byte* p;
     p = (unsigned char*)packet;
+
     print_arp_packet(p);
 
     if(!pcap_sendpacket(fp,p,42/*size*/))
@@ -299,41 +289,4 @@ void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,
     cout<<"Work done, closing the devcie...done."<<endl;
     cout<<totalPackets<<" packets have been sent in "<<end_time-start_time<<" "<<timeUnit<<"."<<endl;
     cout<<"Average:"<<(float)totalPackets/totalTime<<" packets per second."<<endl;
-}
-
-pcap_if_t find_device_by_name(const char* deviceName)
-{
-    pcap_if_t *alldevs;/*point to the first element of the list*/
-    char errbuf[PCAP_ERRBUF_SIZE];
-
-    /*pcap_findalldevs() returns 0 on success and -1 on failure;               */
-    /*finding no devices is considered success, rather than failure.           */
-    /*if -1 is returned, errbuf is filled in with an appropriate error message.*/
-    if (pcap_findalldevs(&alldevs,errbuf)==-1)
-    {
-	//TODO: output error msg and exit.
-	fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
-	cout<<errbuf<<endl;
-    }
-
-    for(pcap_if_t* d=alldevs;d;d=d->next)
-    {
-	if(!strcmp(alldevs->name,deviceName))
-	{
-	    pcap_if_t device = *d;
-	    return device;
-	}
-    }
-}
-
-bool if_device_has_address(const char* deviceName)
-{
-    pcap_if_t device = find_device_by_name(deviceName);
-
-    if(device.addresses)
-    {
-	return true;
-    }
-    else
-	return false;
 }

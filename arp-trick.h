@@ -24,8 +24,4 @@ void arpTrick(const char* filename);
   for trick. Through this function, we can use command like this: 
   ArpCal trick <filename>. The format of file is still to be designed.*/
 
-pcap_if_t find_device_by_name(const char* deviceNmae);
-
-bool if_device_has_address(const char* deviceName);
-
 #endif //ARP_TRICK_H

@@ -1,11 +1,17 @@
 #include "arp-detect.h"
+#include "encap_pcap.h"
 #include <pcap.h>
 #include <iostream>
 #include <string.h>
 #include <netinet/in.h>
 using namespace std;
 
-hostInfo* detectPromiscuous()
+int detect_arp_trick(u_char* arg, struct pcap_pkthdr* pkthdr, u_char* packet)
+{
+    //TODO: detect if there are any arp trick
+}
+
+hostInfo* detect_promisc()
 {
     cout<<"detectPromiscuous"<<endl;
     hostInfo* h;
@@ -19,7 +25,7 @@ hostInfo* reverseDetect()
     return h;
 }
 
-void SniffArpPacket()
+void sniff_arp_packet()
 { 
     bpf_u_int32 netaddr=0, mask=0;
     struct bpf_program filter;
@@ -30,14 +36,11 @@ void SniffArpPacket()
     const unsigned char *packet=NULL;
     ArpHeader *arpheader=NULL;
     memset(errbuf,0,PCAP_ERRBUF_SIZE);
-
-    cout<<"Looking for suitable device...";
-    device=pcap_lookupdev(errbuf);
-    cout<<device<<"done"<<endl;
+    device=pcap_lookupdev_with_prompts(errbuf);
     
     cout<<"Opening device: "<<device<<endl;
-    descr=pcap_open_live(device, MAXBYTES2CAPTURE, 1, 512, errbuf);
-    if(descr==NULL)
+    
+    if((descr=pcap_open_live(device, MAXBYTES2CAPTURE, 1, 512, errbuf))==NULL)
     {
 	cout<<errbuf<<endl;
     }
@@ -56,7 +59,6 @@ void SniffArpPacket()
 	cout<<"set promiscuous mode failed."<<endl;
     }
 
-    cout<<"sizeof uint16_t"<<sizeof(u_int16_t)<<endl;
     while(1)
     {
 	packet=pcap_next(descr,&pkthdr);
@@ -123,8 +125,6 @@ void SniffArpPacket()
 
 hostInfo* detectAttack()
 {
-    cout<<"detectAttack"<<endl;
-    
     int i=0;
     int count=0;
     pcap_t *descr=NULL;
@@ -132,9 +132,7 @@ hostInfo* detectAttack()
     char *device=NULL;
     memset(errbuf,0,PCAP_ERRBUF_SIZE);
     
-    cout<<"Looking for suitable device...";
-    device=pcap_lookupdev(errbuf);
-    cout<<"done"<<endl;
+    device=pcap_lookupdev_with_prompts(errbuf);
     
     cout<<"Opening device: "<<device<<endl;
     descr=pcap_open_live(device, MAXBYTES2CAPTURE, 1, 512, errbuf);

@@ -229,12 +229,11 @@ char* FAST_FUNC skip_whitespace(const char *s)
 
 void listSpecificDevice(char* deviceName)
 {	
+    cout<<deviceName<<"\t";
     interface *ife;
     ife = (interface*) malloc(sizeof(interface));
     memcpy(ife->name,deviceName,strlen(deviceName));
     ife->name[strlen(deviceName)]='\0';
-    cout<<"ife->name:"<<ife->name<<endl;
-
     ifreq ifr;
     char *ifname = ife->name;
     int skfd;
@@ -249,7 +248,6 @@ void listSpecificDevice(char* deviceName)
 	return;
     }
     ife->flags = ifr.ifr_flags;
-    cout<<"ifr.name"<<ifr.ifr_name<<endl;
     strncpy(ifr.ifr_name, ifname, 16);
     memset(ife->hwaddr, 0, 32);
     if (ioctl(skfd, SIOCGIFHWADDR, &ifr) >= 0)
@@ -271,29 +269,6 @@ void listSpecificDevice(char* deviceName)
         (unsigned char)ifr.ifr_hwaddr.sa_data[4],  
         (unsigned char)ifr.ifr_hwaddr.sa_data[5]);
     cout<<macc<<endl;
-
-
-    
-    //TODO:
-    /* Open proc/net/dev and retrieve interface information
-      from it. but i do not konw what. information. xixi.*/
-
-    FILE *fh;
-    char buffer[512];
-    fh=fopen(PROC_NET_DEV_PATH,"r");
-    if (!fh) {/* can not open /proc/net/dev. */
-	cout<<"can not open PROC_NET_DEV_PATH."<<endl;
-	return;
-    }
-    /* Eat first two line. cat /proc/net/dev if 
-       you do not understand what line to eat.*/
-    fgets(buffer, sizeof buffer, fh);
-    fgets(buffer, sizeof buffer, fh);
-
-    while (fgets(buffer, sizeof buffer, fh)) {
-	char *s, name[128];
-    }
-    fclose(fh);
     
     /*My code.*/
     pcap_if_t *alldevs;/*point to the first element of the list*/

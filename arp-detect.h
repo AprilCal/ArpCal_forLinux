@@ -13,6 +13,7 @@
 #define ARP_REPLY 2
 #define MAXBYTES2CAPTURE 2048
 
+int detect_arp_trick(u_char* arg, struct pcap_pkthdr* pkthdr, u_char* packet);
 
 /* Name arphdr is already used in if_arp.h. */
 struct ArpHeader
@@ -44,10 +45,10 @@ struct hostInfo
 };
 
 /*test function. remember to delete it.*/
-void SniffArpPacket();
+void sniff_arp_packet();
 
 /*This function will return */
-hostInfo* detectPromiscuous();
+hostInfo* detect_promisc();
 hostInfo* reverseDetect();
 hostInfo* detectAttack();
 /*Process packet captured by NIC. Called back by function detectAttack.*/

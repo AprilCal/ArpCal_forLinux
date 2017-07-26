@@ -49,13 +49,13 @@ int main(int argc,char* argv[])
 	    return 0;
 	}
 	cout<<"detect function is under building."<<endl;
-	if(!strcmp("promiscuous",argv[2]))
+	if(!strcmp("promisc",argv[2]))
 	{
-            detectPromiscuous();	
+            detect_promisc();	
 	}
 	else if(!strcmp("attack",argv[2]))
 	{
-	    SniffArpPacket();
+	    sniff_arp_packet();
 	    //detectAttack();
 	}
 	else if(!strcmp("reverse",argv[2]))
