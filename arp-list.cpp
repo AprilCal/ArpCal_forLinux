@@ -1,6 +1,5 @@
 /*ifconfig.c interface.c xfuncs_printf.c xfuncs.c platform.c*/
 
-
 //#define HAVE_REMOTE
 #include<stdlib.h>
 #include<string.h>
@@ -9,6 +8,7 @@
 #include<iostream>
 #include<iomanip>
 #include "arp-list.h"
+#include "o_funcs.h"
 
 /* From ifconfig. */
 #include <stdio.h>
@@ -46,20 +46,14 @@
 
 using namespace std;
 
-FILE* fopen_or_warn(const char *path, const char *mode)
+FILE* fopen_with_warn(const char* path, const char* mode)
 {
-    FILE *fp = fopen(path, mode);
-    if (!fp) 
+    FILE* fp = fopen(path, mode);
+    if(!fp)
     {
-	cout<<"can not open the file"<<path<<endl;
-	
-	//TODO:
-	//refactor this segment.
-
-	//bb_simple_perror_msg(path);
-	//errno = 0; /* why? */
+	//TODO: encapsulate errorCode
+	output_error_msg_and_exit("can not open the file.",0);
     }
-	return fp;
 }
 
 
@@ -129,13 +123,6 @@ int FAST_FUNC display_interfaces(char *ifname)
 
 	return (status < 0); /* status < 0 == 1 -- error */
 }
-
-
-
-
-
-
-
 
 
 
@@ -435,6 +422,7 @@ void listSpecificDevice(char* deviceName)
 
 
     cout<<endl<<"my method:"<<endl;
+
     for(;alldevs;alldevs=alldevs->next)
     {
 	if(!strcmp(alldevs->name,deviceName))

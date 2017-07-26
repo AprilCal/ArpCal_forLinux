@@ -85,8 +85,7 @@ struct interface
 
 static interface *int_list, *int_last;
 
-FILE* fopen_or_warn(const char *path, const char *mode);
-
+FILE* fopen_with_warn(const char* path, const char* mode);
 static int if_readlist_proc(char *target)
 {
 	static short proc_read;
@@ -101,7 +100,7 @@ static int if_readlist_proc(char *target)
 	if (!target)
 		proc_read = 1;
 
-	fh = fopen_or_warn(_PATH_PROCNET_DEV, "r");
+	fh = fopen_with_warn(_PATH_PROCNET_DEV, "r");
 	if (!fh) {
 		return 1;// if_readconf();
 	}

@@ -16,6 +16,7 @@
 #include "arp-trick.h"
 #include "parse-options.h"
 #include "arp-list.h"
+#include "o_funcs.h"
 using namespace std;
 
 typedef unsigned char byte;
@@ -49,16 +50,6 @@ struct arpPacket
     byte arp_tpa[4];
 };
 
-#define NORETURN __attribute__ ((__noreturn__))
-
-/* Print error message and exit. For backwords compatibility.
-   In case we will need _exit() instead of exit().          */
-void output_error_msg_and_exit(const char* msg,int errorCode)
-{
-    cout<<msg<<endl;
-    exit(errorCode);
-}
-
 /* Get mac address by name and return an array of 
    byte. The size of the array is ETHER_ADDR_LEN. 
    Remember to free the memory returned.        */
@@ -69,7 +60,7 @@ byte* get_mac_address(char* deviceName)
     strncpy(ifr.ifr_name, deviceName, 16/*IFNameSzie*/);
     if (ioctl(skfd, SIOCGIFHWADDR, &ifr) < 0)//failed.
     {
-	output_error_msg_and_exit("error in ioctl with cmd SIOCGIFHWADDR.",0);
+	//output_error_msg_and_exit("error in ioctl with cmd SIOCGIFHWADDR.",0);
     }
     close(skfd);
     byte *macAddr = (byte*)malloc(6*sizeof(byte));
@@ -148,7 +139,6 @@ void set_ether_header_for_packet(arpPacket* packet,byte* dstMacAddr,byte* srcMac
 
 byte* ipv4String_to_byteArray_with_validity_check(char* ipAddr)
 {
-    cout<<"Checking the validity of tricked ip address."<<endl;
     if(is_IPAddress_valid(ipAddr))
     {
 	byte* ip = (byte*)malloc(IPV4_ADDR_LEN*sizeof(byte));
@@ -309,4 +299,41 @@ void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,
     cout<<"Work done, closing the devcie...done."<<endl;
     cout<<totalPackets<<" packets have been sent in "<<end_time-start_time<<" "<<timeUnit<<"."<<endl;
     cout<<"Average:"<<(float)totalPackets/totalTime<<" packets per second."<<endl;
+}
+
+pcap_if_t find_device_by_name(const char* deviceName)
+{
+    pcap_if_t *alldevs;/*point to the first element of the list*/
+    char errbuf[PCAP_ERRBUF_SIZE];
+
+    /*pcap_findalldevs() returns 0 on success and -1 on failure;               */
+    /*finding no devices is considered success, rather than failure.           */
+    /*if -1 is returned, errbuf is filled in with an appropriate error message.*/
+    if (pcap_findalldevs(&alldevs,errbuf)==-1)
+    {
+	//TODO: output error msg and exit.
+	fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
+	cout<<errbuf<<endl;
+    }
+
+    for(pcap_if_t* d=alldevs;d;d=d->next)
+    {
+	if(!strcmp(alldevs->name,deviceName))
+	{
+	    pcap_if_t device = *d;
+	    return device;
+	}
+    }
+}
+
+bool if_device_has_address(const char* deviceName)
+{
+    pcap_if_t device = find_device_by_name(deviceName);
+
+    if(device.addresses)
+    {
+	return true;
+    }
+    else
+	return false;
 }
