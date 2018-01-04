@@ -1,13 +1,14 @@
 //#define HAVE_REMOTE
-#include<stdlib.h>
-#include<string.h>
+#include <stdlib.h>
+#include <string.h>
 /*include <pcap.h> instead of including <pcap/pcap.h> for backwards compatiability*/
-#include<pcap.h>
-#include<iostream>
-#include<iomanip>
+#include <pcap.h>
+#include <iostream>
+#include <iomanip>
 #include "arp-trick.h"
 #include "arp-list.h"
 #include "arp-detect.h"
+#include "usage.h"
 
 #ifndef LINUX
     #include <sys/socket.h>
@@ -26,7 +27,7 @@ int main(int argc,char* argv[])
 	cout<<"arguement error!"<<endl;
 	return 0;
     }
-    cout<<"argc:"<<argc<<endl;
+    //cout<<"argc:"<<argc<<endl;
 
     /*Arp trick*/
     if(!strcmp("trick",argv[1]))
@@ -68,11 +69,9 @@ int main(int argc,char* argv[])
 	    return 0;
 	}
     }
-    if(!strcmp("-h",argv[1]))
+    if(!strcmp("-h",argv[1])||!strcmp("--help",argv[1]))
     {
-	cout<<"Usage: ArpCal <trick> [-d] <ip address> <time> [second|minute|hour] [interval time]|"<<endl<<
-	      "              <list> [<device>|<iplist>]|"<<endl<<
-	      "              <detect> [promiscuous|attack|reverse]"<<endl;
+	print_usage();
     }
     if(!strcmp("list",argv[1]))
     {

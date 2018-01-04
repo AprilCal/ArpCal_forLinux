@@ -2,18 +2,21 @@
 #include <string.h>
 #include "encap_pcap.h"
 #include "o_funcs.h"
+#include "output_format.h"
 using namespace std;
 
 char* pcap_lookupdev_with_prompts(char* errBuf)
 {
     char* deviceName;
-    cout<<"Looking for suitable device...";
+    output_info("Looking for suitable device...");
     deviceName = pcap_lookupdev(errBuf);
     if(deviceName)//success 
-    {  
-	cout<<"done.  device:"<<deviceName<<endl;
+    {
+	open_color(green);
+	cout<<"done.  interface:"<<deviceName<<endl;
+	close_color();
     }
-    else          //fail
+    else//fail
     {
 	//TODO: errorCode.
 	output_error_msg_and_exit(errBuf,0);

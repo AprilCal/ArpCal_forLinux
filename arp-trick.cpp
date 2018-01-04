@@ -18,6 +18,7 @@
 #include "arp-list.h"
 #include "o_funcs.h"
 #include "encap_pcap.h"
+#include "output_format.h"
 using namespace std;
 
 typedef unsigned char byte;
@@ -91,19 +92,20 @@ void print_ipv4Addr(byte* ipv4Addr)
 
 void print_arp_packet(byte* packet)
 {
+    cout<<"[0x01-0x10] ";
     for(int i=0x0;i<0x10;i++)
     {
-	printf("%02x",packet[i]);
+	printf("%02x ",packet[i]);
     }
-    cout<<endl;
+    cout<<endl<<"[0x11-0x20] ";
     for(int i=0x10;i<0x20;i++)
     {
-	printf("%02x",packet[i]);
+	printf("%02x ",packet[i]);
     }
-    cout<<endl;
+    cout<<endl<<"[0x21-0x2a] ";
     for(int i=0x20;i<0x2a;i++)
     {
-	printf("%02x",packet[i]);
+	printf("%02x ",packet[i]);
     }
     cout<<endl;
 }
@@ -233,7 +235,7 @@ void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,
 
     /*open the device by name*/
     //pcap_t *fp = pcap_open_live_with_prompts();
-    cout<<"Opening the device...";
+    output_info("Opening the device...");
     pcap_t *fp;
     if((fp=pcap_open_live(
 	deviceName,        /*device name*/
@@ -243,24 +245,25 @@ void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,
 	errBuf
 	))==NULL)
     {
-	//TODO:encapuslate
 	output_error_msg_and_exit("error. unable to open the adaper.",0);
-	cout<<"error. unable to open the adaper."<<endl;
 	cout<<errBuf<<endl;
 	cout<<"try sudo ArpCal [-a]."<<endl;
 	return;
     }
+    open_color(green);
     cout<<"done."<<endl;
-
-    cout<<"packet:"<<endl;
+    close_color();
+    output_info_line("Packet content are as follows");
+    open_color(yellow);
     byte* p;
     p = (unsigned char*)packet;
-
+    
     print_arp_packet(p);
+    close_color();
 
     if(!pcap_sendpacket(fp,p,42/*size*/))
     {
-	cout<<"Start senting down packet."<<endl;
+	output_info_line("Start senting down packet.");
     }
     else
     {
@@ -286,7 +289,10 @@ void arpTrick(char* ipAddr,char* spoofingIP,int attackTime,const char* timeUnit,
     const time_t end_time = time(NULL);   /*get end time*/
     /*Close the device*/
     pcap_close(fp);
-    cout<<"Work done, closing the devcie...done."<<endl;
-    cout<<totalPackets<<" packets have been sent in "<<end_time-start_time<<" "<<timeUnit<<"."<<endl;
+    output_info_line("Work done, closing the devcie...done.");
+    output_info_header();
+    open_color(green);
+    cout<<totalPackets<<" packets have been sent in "<<end_time-start_time<<" "<<timeUnit<<". ";
     cout<<"Average:"<<(float)totalPackets/totalTime<<" packets per second."<<endl;
+    close_color();
 }
