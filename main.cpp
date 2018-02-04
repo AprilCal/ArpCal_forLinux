@@ -22,42 +22,39 @@ using namespace std;
 int main(int argc,char* argv[])
 {  
     //TODO: refactor parse options
-    if(argc<2)
+    if(argc<3)
     {
-	cout<<"arguement error!"<<endl;
+	print_usage();
 	return 0;
     }
-    //cout<<"argc:"<<argc<<endl;
-
     /*Arp trick*/
-    if(!strcmp("trick",argv[1]))
-    {
-        if(argc==5)
+    else if(!strcmp("attack",argv[1])){
+	if(!strcmp("--help",argv[2])||!strcmp("-he",argv[2]))
+	    print_attack_usage();
+        else if(argc==5)
 	    arpTrick(argv[2],argv[3],atoi(argv[4]));
 	else if(argc==6)
 	    arpTrick(argv[2],argv[3],atoi(argv[4]),argv[5]);
 	else if(argc==7)
 	    arpTrick(argv[2],argv[3],atoi(argv[4]),argv[5],atoi(argv[6]));
 	else
-	    cout<<"Usage:"<<endl;
+	    print_attack_usage();
     }
-
-    if(!strcmp("detect",argv[1]))
-    {
+    else if(!strcmp("detect",argv[1])){
 	if(argc<3)
 	{
-	    cout<<"Usage:"<<endl;
+	    print_detect_usage();
 	    return 0;
 	}
-	cout<<"detect function is under building."<<endl;
-	if(!strcmp("promisc",argv[2]))
+	else if(!strcmp("--help",argv[2])||!strcmp("-he",argv[2]))
+	    print_detect_usage();
+	else if(!strcmp("promisc",argv[2]))
 	{
             detect_promisc();	
 	}
 	else if(!strcmp("attack",argv[2]))
 	{
 	    sniff_arp_packet();
-	    //detectAttack();
 	}
 	else if(!strcmp("reverse",argv[2]))
 	{
@@ -69,19 +66,19 @@ int main(int argc,char* argv[])
 	    return 0;
 	}
     }
-    if(!strcmp("-h",argv[1])||!strcmp("--help",argv[1]))
-    {
-	print_usage();
-    }
-    if(!strcmp("list",argv[1]))
+    else if(!strcmp("list",argv[1]))
     {
 	if(argc<3)
 	{
-	    cout<<"Usage:"<<endl;
+	    print_list_usage();
 	    return 0;
 	}
+	else if(!strcmp("--help",argv[2])||!strcmp("-h",argv[2]))
+	{
+            print_list_usage();	
+	}
 	/*get device list*/
-	if(!strcmp("devices",argv[2]))
+	else if(!strcmp("devices",argv[2]))
 	{
             getDeviceList();	
 	}
@@ -94,6 +91,13 @@ int main(int argc,char* argv[])
 	{
 	    listSpecificDevice(argv[2]);
 	}
+    }
+    else if(!strcmp("-h",argv[1])||!strcmp("--help",argv[1]))
+    {
+	print_usage();
+    }
+    else{
+	print_usage();
     }
     return 0;  
 }

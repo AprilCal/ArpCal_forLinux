@@ -107,3 +107,28 @@ void output_with_color(const char* str,const char* color){
     close_color();
     //printf("\033[%sm%s\033[0m",color,str);
 }
+
+
+
+
+
+//print arp packet
+void print_arp_packet(unsigned char* packet)
+{
+    cout<<"[0x01-0x10] ";
+    for(int i=0x0;i<0x10;i++)
+    {
+	printf("%02x ",packet[i]);
+    }
+    cout<<endl<<"[0x11-0x20] ";
+    for(int i=0x10;i<0x20;i++)
+    {
+	printf("%02x ",packet[i]);
+    }
+    cout<<endl<<"[0x21-0x2a] ";
+    for(int i=0x20;i<0x2a;i++)
+    {
+	printf("%02x ",packet[i]);
+    }
+    cout<<endl;
+}

@@ -9,6 +9,7 @@
 #include<iomanip>
 #include "arp-list.h"
 #include "o_funcs.h"
+#include "output_format.h"
 
 /* From ifconfig. */
 #include <stdio.h>
@@ -254,10 +255,6 @@ void listSpecificDevice(char* deviceName)
 	memcpy(ife->hwaddr, ifr.ifr_hwaddr.sa_data, 8);
     ife->type = ifr.ifr_hwaddr.sa_family;
     cout<<"ife->hwaddr";
-    for(int i=0;i<6;i++)
-    {
-	printf("%02x",(unsigned char)ifr.ifr_hwaddr.sa_data[i]);
-    }
     /* Display an Ethernet address in readable format. */
     char macc[18];
     const char *test_eth = "eth0";  
@@ -286,6 +283,7 @@ void listSpecificDevice(char* deviceName)
 	cout<<errbuf<<endl;
     }
 
+    cout<<"ifconfig---------------------------------------"<<endl;
 
     /* From ifconfig. */
     int fd;
@@ -417,8 +415,7 @@ void getDeviceList()
     pcap_if_t *alldevs;              /*point to the first element of the list*/
     char errbuf[PCAP_ERRBUF_SIZE];
 
-    /*Retrieve the device list from the local machine.*/
-    cout << "retrieving device list from the local machine..."<<endl;
+    output_info_line("retrieving device list from the local machine...");
 
     /*pcap_findalldevs() returns 0 on success and -1 on failure;               */
     /*finding no devices is considered success, rather than failure.           */
@@ -443,7 +440,7 @@ void getDeviceList()
       3 fields: Devices(device name); Descriptions(descriptions
       of the corresponding device); Addresses(indicating if there
       are any address of the device.).                      */
-    //now, set table header.
+    //set table header.
     cout<<endl<<left<<setw(13)<<"Devices:";                          //Devices field
     cout<<"|"<<left<<setw(longestDesc)<<"Descriptions:";             //Descriptions field
     cout<<"|"<<left<<setw(13)<<"Addresses:"<<endl;                                       //Addresses field

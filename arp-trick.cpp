@@ -90,26 +90,6 @@ void print_ipv4Addr(byte* ipv4Addr)
     }
 }
 
-void print_arp_packet(byte* packet)
-{
-    cout<<"[0x01-0x10] ";
-    for(int i=0x0;i<0x10;i++)
-    {
-	printf("%02x ",packet[i]);
-    }
-    cout<<endl<<"[0x11-0x20] ";
-    for(int i=0x10;i<0x20;i++)
-    {
-	printf("%02x ",packet[i]);
-    }
-    cout<<endl<<"[0x21-0x2a] ";
-    for(int i=0x20;i<0x2a;i++)
-    {
-	printf("%02x ",packet[i]);
-    }
-    cout<<endl;
-}
-
 /* TODO: still not completed. */
 int check_timeUnit_and_calculate_totalTime(int attackTime,const char* timeUnit)
 {

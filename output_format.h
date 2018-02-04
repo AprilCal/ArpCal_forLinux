@@ -38,4 +38,7 @@ void output_arp_packet(string str);
 void open_color(const char* color);
 void close_color();
 
+//print arp packet
+void print_arp_packet(unsigned char* packet);
+
 #endif //OUTPUT_FORMAT_H

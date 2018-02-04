@@ -1,16 +1,20 @@
 #include "arp-detect.h"
 #include "encap_pcap.h"
+#include "output_format.h"
+#include "arp-trick.h"
 #include <pcap.h>
 #include <iostream>
 #include <string.h>
 #include <netinet/in.h>
 using namespace std;
 
+//detect arp attack.
 int detect_arp_trick(u_char* arg, struct pcap_pkthdr* pkthdr, u_char* packet)
 {
-    //TODO: detect if there are any arp trick
+    //TODO: detect if there are any arp trick.
 }
 
+//detect if there are any promiscuous host.
 hostInfo* detect_promisc()
 {
     cout<<"detectPromiscuous"<<endl;
@@ -18,6 +22,7 @@ hostInfo* detect_promisc()
     return h;
 }
 
+//detect firewall.
 hostInfo* reverseDetect()
 {
     cout<<"reverseDetect"<<endl;
@@ -38,13 +43,20 @@ void sniff_arp_packet()
     memset(errbuf,0,PCAP_ERRBUF_SIZE);
     device=pcap_lookupdev_with_prompts(errbuf);
     
-    cout<<"Opening device: "<<device<<endl;
-    
+    output_info("Opening device: ");
+    open_color(green);
+    cout<<device;
+    close_color();
+
     if((descr=pcap_open_live(device, MAXBYTES2CAPTURE, 1, 512, errbuf))==NULL)
     {
 	cout<<errbuf<<endl;
     }
-    else{cout<< "success in opening"<<endl;}
+    else{
+	open_color(green);
+	cout<< "  done."<<endl;
+	close_color();
+    }
 
     pcap_lookupnet(device, &netaddr,&mask,errbuf);
     pcap_compile(descr, &filter, "arp",1,mask);    
@@ -52,11 +64,11 @@ void sniff_arp_packet()
 
     if(pcap_set_promisc(descr,1)==0)
     {
-	cout<<"set promiscuous mode success."<<endl;
+	output_info_line("set promiscuous mode success.");
     }
     else
     {
-	cout<<"set promiscuous mode failed."<<endl;
+	output_warning_line("set promiscuous mode failed.");
     }
 
     while(1)
@@ -65,10 +77,10 @@ void sniff_arp_packet()
 	arpheader=(ArpHeader*)(packet);
 	if(pkthdr.len==0||packet==NULL)
 	    continue;
-	cout<<"\n\nReceived packet size:"<<pkthdr.len<<" bytes"<<endl;
+	//cout<<"\n\nReceived packet size:"<<pkthdr.len<<" bytes"<<endl;
 	if(ntohs(arpheader->oper)==ARP_REQUEST)
 	{
-	    cout<<"who has ";
+	    cout<<"Request: who has ";
 	    for(int i=0;i<4;i++)
 		{printf("%d.",arpheader->tpa[i]);}
 	    cout<<" tell ";
@@ -78,6 +90,7 @@ void sniff_arp_packet()
 	}
 	else if(ntohs(arpheader->oper)==ARP_REPLY)
 	{
+	    cout<<"Reply: ";
 	    for(int i=0;i<4;i++)
 		{printf("%d.",arpheader->tpa[i]);}
 	    cout<<" is at ";
@@ -92,13 +105,23 @@ void sniff_arp_packet()
 
 	if(packet!=NULL)
 	{
-	    cout<<ntohs(arpheader->htype)<<endl;
-	    cout<<ntohs(arpheader->ptype)<<endl;
-	    cout<<"head dst mac:";
+	    print_arp_packet((unsigned char*)packet);
+	    //cout<<ntohs(arpheader->htype)<<endl;
+	    //cout<<ntohs(arpheader->ptype)<<endl;
+	    /*cout<<"head dst mac:";
 	    for(int i=0;i<6;i++)
 	    {
-		printf("%02X:",arpheader->dstAddr[i]);
+		//printf("%02X:",arpheader->dstAddr[i]);
 	    }
+	    char macc[18];
+	    snprintf(macc, 18, "%02x:%02x:%02x:%02x:%02x:%02x",  
+        	(unsigned char)arpheader->dstAddr[0],   
+        	(unsigned char)arpheader->dstAddr[1],  
+        	(unsigned char)arpheader->dstAddr[2],   
+        	(unsigned char)arpheader->dstAddr[3],  
+        	(unsigned char)arpheader->dstAddr[4],  
+        	(unsigned char)arpheader->dstAddr[5]);
+	    cout<<macc<<endl;
 	    cout<<"head src mac:";
 	    for(int i=0;i<6;i++)
 		printf("%02X:",arpheader->srcAddr[i]);
@@ -115,12 +138,10 @@ void sniff_arp_packet()
 	    cout<<"Target IP:";
 	    for(int i=0;i<4;i++)
 		printf("%d.",arpheader->tpa[i]);
-	    cout<<endl;
+	    cout<<endl;*/
 	}
 	cout<<endl;
     }
-    
-    
 }
 
 hostInfo* detectAttack()
