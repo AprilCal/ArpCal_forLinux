@@ -1,11 +1,6 @@
 What's this?
 ======
 An Arp trick tool for linux, also do some other things else.  
-ArpCal does not mean any thing by itself, cause I don't konw how to name it so far.  
-
-How to use it?
-======
-It's up to you :P  
 
 How to install libpcap for Linux?
 ======
@@ -17,12 +12,6 @@ For example.i work under Ubuntu.
 5.cd libpcap-1.8.1  
 6.sudo make && make install  
 7.done
-
-How to execute it as a command?
-======
-1.echo $PAtH  
-2.move it to any of the path above.  
-for example ---- sudo mv ArpCal usr/local/sbin
 
 Usage:
 ======
