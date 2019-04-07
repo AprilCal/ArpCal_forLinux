@@ -16,13 +16,6 @@ For example.i work under Ubuntu.
 Usage:
 ======
 ArpCal &lt;trick&gt; &lt;target ip&gt; &lt;spoofing ip&gt; &lt;time&gt; [timeUnit] [intervalTime]  
-       &lt;trick&gt; means executring the trick unit.  
-       &lt;target ip&gt; represent the target ip to trick.  
-       &lt;spoofing ip&gt; represent the target ip to fake.  
-       timeUnit={second|minute|hour}. The default time unit is second.  
-       The unit of intervalTime is milisecond, which is of 500 default value.  
 
 ArpCal &lt;list&gt; &lt;object&gt;  
-       object={deviceName|all}. DeviceName represent a specific device on the local machine.
-       all represent all apaper on the local machine.
 
